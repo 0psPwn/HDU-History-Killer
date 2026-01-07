@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题本 - 历史复习软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .header-info {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .header-info strong {
+            color: #cc0000;
+            font-size: 1.5em;
+        }
+
+        .question-card {
+            background: #fff3f3;
+            border: 1px solid #ffcccc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(255, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.15);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ffdddd;
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: #cc0000;
+            font-size: 1.1em;
+        }
+
+        .question-chapter {
+            font-size: 0.9em;
+            color: #666;
+            background: #ffe6e6;
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .options {
+            margin-bottom: 15px;
+        }
+
+        .option {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #fff;
+            border-left: 3px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: #f9f9f9;
+            border-left-color: #cc0000;
+        }
+
+        .correct-answer {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            background: #ccffcc;
+            color: #00cc00;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 10px rgba(255, 107, 107, 0.3);
+        }
+
+        .no-questions {
+            text-align: center;
+            color: #666;
+            font-size: 1.5em;
+            padding: 60px 20px;
+        }
+
+        .no-questions p {
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            background: none;
+            margin-top: 10px;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>错题本</h1>
+        
+        <div class="header-info">
+            <p>您共有 <strong>{{ wrong_questions|length }}</strong> 道错题需要复习</p>
+        </div>
+
+        {% if wrong_questions %}
+            {% for question in wrong_questions %}
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-number">第 {{ question['id'] }} 题</span>
+                    <span class="question-chapter">{{ question['chapter'] }}</span>
+                </div>
+                <div class="question-text">{{ question['question'] }}</div>
+                <div class="options">
+                    {% for option in question['options'] %}
+                    <div class="option">
+                        <strong>{{ option['letter'] }}.</strong> {{ option['text'] }}
+                        {% if option['letter'] == question['answer'] %}
+                        <span class="correct-answer">正确答案：{{ question['answer'] }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-danger" onclick="removeQuestion({{ question['id'] }})">删除</button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-questions">
+                <p>您的错题本是空的！</p>
+                <p>继续努力学习，做错的题目会自动添加到这里。</p>
+            </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/wrong_quiz" class="btn {% if not wrong_questions %}disabled{% endif %}">
+                {% if wrong_questions %}开始错题练习{% else %}没有错题可练习{% endif %}
+            </a>
+            <a href="/" class="btn back-btn">返回主页</a>
+        </div>
+    </div>
+
+    <script>
+        // 删除错题
+        function removeQuestion(questionId) {
+            if (confirm('确定要删除这道错题吗？')) {
+                fetch(`/api/remove_wrong/${questionId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 刷新页面以更新错题列表
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

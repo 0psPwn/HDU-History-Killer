@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题练习 - 历史复习软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .quiz-info {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .quiz-info strong {
+            color: #cc0000;
+            font-size: 1.5em;
+        }
+
+        .question-card {
+            background: #fff3f3;
+            border: 1px solid #ffcccc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(255, 0, 0, 0.1);
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: #cc0000;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .question-chapter {
+            font-size: 0.9em;
+            color: #666;
+            background: #ffe6e6;
+            padding: 3px 8px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            margin-bottom: 20px;
+        }
+
+        .option {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            text-align: left;
+        }
+
+        .option:hover {
+            background: #f9f9f9;
+            border-color: #cc0000;
+        }
+
+        .option.selected {
+            background: #ffe6e6;
+            border-color: #cc0000;
+        }
+
+        .option input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .no-questions {
+            text-align: center;
+            color: #666;
+            font-size: 1.5em;
+            padding: 60px 20px;
+        }
+
+        .no-questions p {
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            background: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>错题练习</h1>
+        
+        {% if no_questions %}
+            <div class="no-questions">
+                <p>您的错题本是空的！</p>
+                <p>继续努力学习，做错的题目会自动添加到这里。</p>
+                <a href="/" class="back-btn">返回主页</a>
+            </div>
+        {% else %}
+            <div class="quiz-info">
+                <p>本次练习共有 <strong>{{ questions|length }}</strong> 道错题</p>
+            </div>
+
+            <form method="POST" id="quiz-form">
+                {% for question in questions %}
+                <div class="question-card">
+                    <div class="question-number">第 {{ loop.index }} 题（ID: {{ question['id'] }}）</div>
+                    <div class="question-chapter">{{ question['chapter'] }}</div>
+                    <div class="question-text">{{ question['question'] }}</div>
+                    <div class="options">
+                        {% for option in question['options'] %}
+                        <label class="option">
+                            <input type="radio" name="{{ question['id'] }}" value="{{ option['letter'] }}" required>
+                            <strong>{{ option['letter'] }}.</strong> {{ option['text'] }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="submit-btn">提交答案</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/" class="back-btn">返回主页</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // 为选项添加选中状态
+        const options = document.querySelectorAll('.option');
+        options.forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    // 移除其他选项的选中状态
+                    const questionCard = this.closest('.question-card');
+                    questionCard.querySelectorAll('.option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    // 添加当前选项的选中状态
+                    this.classList.add('selected');
+                }
+            });
+        });
+
+        // 表单提交前验证
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            const allQuestionsAnswered = document.querySelectorAll('.question-card').every(card => {
+                const radio = card.querySelector('input[type="radio"]:checked');
+                return radio !== null;
+            });
+
+            if (!allQuestionsAnswered) {
+                e.preventDefault();
+                alert('请完成所有题目再提交！');
+            }
+        });
+    </script>
+</body>
+</html>

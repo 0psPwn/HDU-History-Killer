@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题练习结果 - 历史复习软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .percentage {
+            font-size: 2em;
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 1s ease;
+        }
+
+        .result-details {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .result-details p {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            background: none;
+            margin-top: 10px;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        /* 错题卡片样式优化 */
+        .wrong-question-card {
+            background: #fff3f3;
+            border: 1px solid #ffcccc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(255, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .wrong-question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.15);
+        }
+
+        .wrong-question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ffdddd;
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: #cc0000;
+            font-size: 1.1em;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .options {
+            margin-bottom: 15px;
+        }
+
+        .option {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #fff;
+            border-left: 3px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: #f9f9f9;
+            border-left-color: #cc0000;
+        }
+
+        .user-answer {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            background: #ffcccc;
+            color: #cc0000;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .correct-answer {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            background: #ccffcc;
+            color: #00cc00;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .wrong-questions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .wrong-questions h3 {
+            text-align: center;
+            color: #cc0000;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>错题练习结果</h1>
+        
+        <div class="result-card">
+            <div class="score">{{ score }}/{{ total }}</div>
+            <div class="percentage">{{ percentage }}%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ percentage }}%"></div>
+            </div>
+            <div class="message">
+                {% if percentage >= 80 %}
+                    优秀！大部分错题都掌握了！
+                {% elif percentage >= 60 %}
+                    良好！还有一些错题需要重点复习！
+                {% else %}
+                    需要继续努力！错题掌握程度较低！
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="result-details">
+            <p><strong>正确题数：</strong> {{ score }} 题（这些题目已从错题本中移除）</p>
+            <p><strong>错误题数：</strong> {{ total - score }} 题（这些题目仍保留在错题本中）</p>
+            <p><strong>答题准确率：</strong> {{ percentage }}%</p>
+        </div>
+
+        {% if wrong_questions %}
+        <div class="wrong-questions">
+            <h3 style="color: #333; margin-bottom: 20px; font-size: 1.5em;">错题解析</h3>
+            {% for wrong in wrong_questions %}
+            <div class="wrong-question-card">
+                <div class="wrong-question-header">
+                    <span class="question-number">第 {{ wrong['question']['id'] }} 题 ({{ wrong['question']['chapter'] }})</span>
+                </div>
+                <div class="question-text">{{ wrong['question']['question'] }}</div>
+                <div class="options">
+                    {% for option in wrong['question']['options'] %}
+                    <div class="option">
+                        <strong>{{ option['letter'] }}.</strong> {{ option['text'] }}
+                        {% if option['letter'] == wrong['user_answer'] %}
+                        <span class="user-answer">您的答案：{{ wrong['user_answer'] }}</span>
+                        {% endif %}
+                        {% if option['letter'] == wrong['correct_answer'] %}
+                        <span class="correct-answer">正确答案：{{ wrong['correct_answer'] }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <div class="result-details">
+                <p style="color: #00cc00; font-weight: bold; text-align: center;">
+                    恭喜！所有错题都答对了！错题本已清空！
+                </p>
+            </div>
+        {% endif %}
+
+        <div class="action-buttons">
+            <a href="/wrong_quiz" class="btn">
+                {% if wrong_questions %}继续错题练习{% else %}再做一组（随机答题）{% endif %}
+            </a>
+            <a href="/wrong_questions" class="btn">查看错题本</a>
+            <a href="/" class="btn back-btn">返回主页</a>
+        </div>
+    </div>
+
+    <script>
+        // 进度条动画效果
+        window.addEventListener('load', function() {
+            const progressFill = document.querySelector('.progress-fill');
+            const finalWidth = progressFill.style.width;
+            progressFill.style.width = '0%';
+            setTimeout(() => {
+                progressFill.style.width = finalWidth;
+            }, 100);
+        });
+    </script>
+</body>
+</html>

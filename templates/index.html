@@ -80,9 +80,12 @@
             <a href="/quiz" class="menu-item">开始随机答题</a>
             <a href="/chapters" class="menu-item">章节测试</a>
             <a href="/search" class="menu-item">题目查询</a>
+            <a href="/wrong_quiz" class="menu-item">错题练习</a>
+            <a href="/wrong_questions" class="menu-item">错题本</a>
         </div>
         <div class="footer">
             <p>包含 {{ total_questions }} 道历史选择题</p>
+            <p id="wrong-count">错题本中有 0 道题目</p>
             <p>点击按钮开始您的复习之旅</p>
         </div>
     </div>
@@ -94,6 +97,14 @@
                 const footer = document.querySelector('.footer');
                 const questionCountElement = footer.querySelector('p:first-child');
                 questionCountElement.textContent = `包含 ${data.length} 道历史选择题`;
+            });
+        
+        // 从API获取错题本数量
+        fetch('/api/wrong_questions')
+            .then(response => response.json())
+            .then(data => {
+                const wrongCountElement = document.getElementById('wrong-count');
+                wrongCountElement.textContent = `错题本中有 ${data.length} 道题目`;
             });
     </script>
 </body>
