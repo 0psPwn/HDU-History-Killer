@@ -5,7 +5,7 @@
 包含随机答题、题目查询和错题本功能
 """
 
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, redirect
 import json
 import random
 import os
@@ -77,32 +77,38 @@ def chapters():
 @app.route('/chapter/<chapter_name>', methods=['GET', 'POST'])
 def chapter_quiz(chapter_name):
     """章节答题功能"""
-    questions = load_questions()
-    # 获取指定章节的所有题目
-    chapter_questions = [q for q in questions if q['chapter'] == chapter_name]
-    
     if request.method == 'POST':
+        # 从session中获取本次练习的题目列表
+        session_chapter_questions = session.get('chapter_questions', [])
+        
+        if not session_chapter_questions:
+            return redirect(f'/chapter/{chapter_name}')
+        
         # 处理答题结果
         user_answers = request.form.to_dict()
         score = 0
-        total = len(user_answers)
+        total = len(session_chapter_questions)
         wrong_questions = []
         
-        for question_id, user_answer in user_answers.items():
-            question_id = int(question_id)
-            # 找到对应的题目
-            question = next(q for q in chapter_questions if q['id'] == question_id)
-            if user_answer.upper() == question['answer'].upper():
+        # 遍历本次练习的所有题目
+        for question in session_chapter_questions:
+            question_id = question['id']
+            user_answer = user_answers.get(str(question_id), '').upper()
+            
+            if user_answer == question['answer'].upper():
                 score += 1
             else:
                 # 记录错题信息
                 wrong_questions.append({
                     'question': question,
-                    'user_answer': user_answer.upper(),
+                    'user_answer': user_answer,
                     'correct_answer': question['answer'].upper()
                 })
                 # 自动将错题添加到错题本
                 add_to_wrong_questions(question_id)
+        
+        # 清除session中的题目列表
+        session.pop('chapter_questions', None)
         
         # 计算得分
         percentage = (score / total) * 100
@@ -112,6 +118,11 @@ def chapter_quiz(chapter_name):
                              percentage=round(percentage, 1),
                              wrong_questions=wrong_questions)
     else:
+        # 加载题目数据
+        questions = load_questions()
+        # 获取指定章节的所有题目
+        chapter_questions = [q for q in questions if q['chapter'] == chapter_name]
+        
         # 随机排序题目
         random.shuffle(chapter_questions)
         session['chapter_questions'] = chapter_questions
@@ -122,30 +133,38 @@ def chapter_quiz(chapter_name):
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
     """随机答题功能"""
-    questions = load_questions()
-    
     if request.method == 'POST':
+        # 从session中获取本次练习的题目列表
+        session_quiz_questions = session.get('quiz_questions', [])
+        
+        if not session_quiz_questions:
+            return redirect('/quiz')
+        
         # 处理答题结果
         user_answers = request.form.to_dict()
         score = 0
-        total = len(user_answers)
+        total = len(session_quiz_questions)
         wrong_questions = []
         
-        for question_id, user_answer in user_answers.items():
-            question_id = int(question_id)
-            # 找到对应的题目
-            question = next(q for q in questions if q['id'] == question_id)
-            if user_answer.upper() == question['answer'].upper():
+        # 遍历本次练习的所有题目
+        for question in session_quiz_questions:
+            question_id = question['id']
+            user_answer = user_answers.get(str(question_id), '').upper()
+            
+            if user_answer == question['answer'].upper():
                 score += 1
             else:
                 # 记录错题信息
                 wrong_questions.append({
                     'question': question,
-                    'user_answer': user_answer.upper(),
+                    'user_answer': user_answer,
                     'correct_answer': question['answer'].upper()
                 })
                 # 自动将错题添加到错题本
                 add_to_wrong_questions(question_id)
+        
+        # 清除session中的题目列表
+        session.pop('quiz_questions', None)
         
         # 计算得分
         percentage = (score / total) * 100
@@ -155,6 +174,9 @@ def quiz():
                              percentage=round(percentage, 1),
                              wrong_questions=wrong_questions)
     else:
+        # 加载题目数据
+        questions = load_questions()
+        
         # 随机选择10道题目
         random_questions = random.sample(questions, 10)
         session['quiz_questions'] = random_questions
@@ -205,33 +227,43 @@ def wrong_questions():
 @app.route('/wrong_quiz', methods=['GET', 'POST'])
 def wrong_quiz():
     """错题练习功能"""
-    wrong_questions_list = load_wrong_questions()
-    
-    if not wrong_questions_list:
-        return render_template('wrong_quiz.html', questions=[], no_questions=True)
-    
     if request.method == 'POST':
+        # 从session中获取本次练习的题目列表
+        session_wrong_questions = session.get('wrong_questions', [])
+        
+        if not session_wrong_questions:
+            return redirect('/wrong_quiz')
+        
         # 处理答题结果
         user_answers = request.form.to_dict()
         score = 0
-        total = len(user_answers)
+        total = len(session_wrong_questions)
         wrong_questions_result = []
+        wrong_ids_to_remove = []  # 存储需要删除的题目ID
         
-        for question_id, user_answer in user_answers.items():
-            question_id = int(question_id)
-            # 找到对应的题目
-            question = next(q for q in wrong_questions_list if q['id'] == question_id)
-            if user_answer.upper() == question['answer'].upper():
+        # 遍历本次练习的所有题目
+        for question in session_wrong_questions:
+            question_id = question['id']
+            user_answer = user_answers.get(str(question_id), '').upper()
+            
+            if user_answer == question['answer'].upper():
                 score += 1
-                # 答对后从错题本中删除该题目
-                remove_from_wrong_questions(question_id)
+                # 记录需要删除的题目ID
+                wrong_ids_to_remove.append(question_id)
             else:
-                # 记录错题信息
+                # 记录错题信息（包含完整的题目数据）
                 wrong_questions_result.append({
                     'question': question,
-                    'user_answer': user_answer.upper(),
+                    'user_answer': user_answer,
                     'correct_answer': question['answer'].upper()
                 })
+        
+        # 一次性删除所有答对的题目
+        for question_id in wrong_ids_to_remove:
+            remove_from_wrong_questions(question_id)
+        
+        # 清除session中的错题列表
+        session.pop('wrong_questions', None)
         
         # 计算得分
         percentage = (score / total) * 100
@@ -241,8 +273,15 @@ def wrong_quiz():
                              percentage=round(percentage, 1),
                              wrong_questions=wrong_questions_result)
     else:
+        # 加载错题本数据
+        wrong_questions_list = load_wrong_questions()
+        
+        if not wrong_questions_list:
+            return render_template('wrong_quiz.html', questions=[], no_questions=True)
+        
         # 随机排序错题
         random.shuffle(wrong_questions_list)
+        # 将本次练习的题目列表存储到session中
         session['wrong_questions'] = wrong_questions_list
         return render_template('wrong_quiz.html', questions=wrong_questions_list)
 
