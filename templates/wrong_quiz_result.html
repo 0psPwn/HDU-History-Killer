@@ -144,6 +144,33 @@
             box-shadow: 0 5px 15px rgba(255, 0, 0, 0.15);
         }
 
+        /* 正确题目卡片样式 */
+        .correct-question-card {
+            background: #f0fff0;
+            border: 1px solid #ccffcc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 255, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .correct-question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.15);
+        }
+
+        /* 选项样式优化 */
+        .option.user-selected {
+            border-left-color: #cc0000;
+            background: #fff5f5;
+        }
+
+        .option.correct-option {
+            border-left-color: #00cc00;
+            background: #f5fff5;
+        }
+
         .wrong-question-header {
             display: flex;
             justify-content: space-between;
@@ -248,8 +275,39 @@
             <p><strong>答题准确率：</strong> {{ percentage }}%</p>
         </div>
 
+        <!-- 所有题目结果展示 -->
+        <div class="all-questions">
+            <h3 style="color: #333; margin-bottom: 20px; font-size: 1.5em;">所有题目结果</h3>
+            {% for result in all_questions_result %}
+            <!-- 根据答题结果选择不同的卡片样式 -->
+            <div class="{% if result['is_correct'] %}correct-question-card{% else %}wrong-question-card{% endif %}">
+                <div class="wrong-question-header">
+                    <span class="question-number">第 {{ result['question']['id'] }} 题 ({{ result['question']['chapter'] }})</span>
+                    <span style="color: {% if result['is_correct'] %}#00cc00{% else %}#cc0000{% endif %}; font-weight: bold;">
+                        {% if result['is_correct'] %}✓ 正确{% else %}✗ 错误{% endif %}
+                    </span>
+                </div>
+                <div class="question-text">{{ result['question']['question'] }}</div>
+                <div class="options">
+                    {% for option in result['question']['options'] %}
+                    <div class="option {% if option['letter'] == result['user_answer'] %}user-selected{% endif %} {% if option['letter'] == result['correct_answer'] %}correct-option{% endif %}">
+                        <strong>{{ option['letter'] }}.</strong> {{ option['text'] }}
+                        {% if option['letter'] == result['user_answer'] %}
+                        <span class="user-answer">您的答案：{{ result['user_answer'] }}</span>
+                        {% endif %}
+                        {% if option['letter'] == result['correct_answer'] %}
+                        <span class="correct-answer">正确答案：{{ result['correct_answer'] }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 错题解析 -->
         {% if wrong_questions %}
-        <div class="wrong-questions">
+        <div class="wrong-questions" style="margin-top: 40px;">
             <h3 style="color: #333; margin-bottom: 20px; font-size: 1.5em;">错题解析</h3>
             {% for wrong in wrong_questions %}
             <div class="wrong-question-card">
@@ -274,7 +332,7 @@
             {% endfor %}
         </div>
         {% else %}
-            <div class="result-details">
+            <div class="result-details" style="margin-top: 20px;">
                 <p style="color: #00cc00; font-weight: bold; text-align: center;">
                     恭喜！所有错题都答对了！错题本已清空！
                 </p>

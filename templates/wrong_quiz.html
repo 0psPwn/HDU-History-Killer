@@ -177,8 +177,11 @@
             </div>
         {% else %}
             <div class="quiz-info">
-                <p>本次练习共有 <strong>{{ questions|length }}</strong> 道错题</p>
-            </div>
+            <p>本次练习共有 <strong>{{ questions|length }}</strong> 道错题</p>
+            {% if message %}
+            <p style="color: #667eea; font-weight: bold;">{{ message }}</p>
+            {% endif %}
+        </div>
 
             <form method="POST" id="quiz-form">
                 {% for question in questions %}

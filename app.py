@@ -37,18 +37,19 @@ def save_wrong_questions(wrong_questions):
         json.dump(wrong_questions, f, ensure_ascii=False, indent=4)
 
 # 添加错题到错题本
-def add_to_wrong_questions(question_id):
-    """将指定ID的题目添加到错题本"""
-    questions = load_questions()
+def add_to_wrong_questions(question):
+    """将完整的题目添加到错题本"""
     wrong_questions = load_wrong_questions()
     
-    # 检查题目是否已在错题本中
+    # 检查题目是否已在错题本中，通过比较完整的题目内容
+    # 由于题目数据文件中存在重复的ID，我们需要比较完整的题目内容来确保唯一性
     for wrong in wrong_questions:
-        if wrong['id'] == question_id:
+        if (wrong['id'] == question['id'] and 
+            wrong['chapter'] == question['chapter'] and 
+            wrong['question'] == question['question']):
             return False  # 题目已存在
     
-    # 找到题目并添加到错题本
-    question = next(q for q in questions if q['id'] == question_id)
+    # 将完整的题目添加到错题本
     wrong_questions.append(question)
     save_wrong_questions(wrong_questions)
     return True
@@ -89,6 +90,7 @@ def chapter_quiz(chapter_name):
         score = 0
         total = len(session_chapter_questions)
         wrong_questions = []
+        last_wrong_ids = []  # 存储本次练习做错的题目ID
         
         # 遍历本次练习的所有题目
         for question in session_chapter_questions:
@@ -104,11 +106,16 @@ def chapter_quiz(chapter_name):
                     'user_answer': user_answer,
                     'correct_answer': question['answer'].upper()
                 })
-                # 自动将错题添加到错题本
-                add_to_wrong_questions(question_id)
+                # 自动将错题添加到错题本，传入完整的题目对象
+                add_to_wrong_questions(question)
+                # 记录本次练习做错的题目ID
+                last_wrong_ids.append(question_id)
         
         # 清除session中的题目列表
         session.pop('chapter_questions', None)
+        
+        # 将本次练习做错的题目ID存储到session中，方便用户后续只练习这些题目
+        session['last_wrong_ids'] = last_wrong_ids
         
         # 计算得分
         percentage = (score / total) * 100
@@ -145,6 +152,7 @@ def quiz():
         score = 0
         total = len(session_quiz_questions)
         wrong_questions = []
+        last_wrong_ids = []  # 存储本次练习做错的题目ID
         
         # 遍历本次练习的所有题目
         for question in session_quiz_questions:
@@ -160,11 +168,16 @@ def quiz():
                     'user_answer': user_answer,
                     'correct_answer': question['answer'].upper()
                 })
-                # 自动将错题添加到错题本
-                add_to_wrong_questions(question_id)
+                # 自动将错题添加到错题本，传入完整的题目对象
+                add_to_wrong_questions(question)
+                # 记录本次练习做错的题目ID
+                last_wrong_ids.append(question_id)
         
         # 清除session中的题目列表
         session.pop('quiz_questions', None)
+        
+        # 将本次练习做错的题目ID存储到session中，方便用户后续只练习这些题目
+        session['last_wrong_ids'] = last_wrong_ids
         
         # 计算得分
         percentage = (score / total) * 100
@@ -226,7 +239,7 @@ def wrong_questions():
 
 @app.route('/wrong_quiz', methods=['GET', 'POST'])
 def wrong_quiz():
-    """错题练习功能"""
+    """错题练习功能 - 从错题本中提取所有题目"""
     if request.method == 'POST':
         # 从session中获取本次练习的题目列表
         session_wrong_questions = session.get('wrong_questions', [])
@@ -238,25 +251,28 @@ def wrong_quiz():
         user_answers = request.form.to_dict()
         score = 0
         total = len(session_wrong_questions)
-        wrong_questions_result = []
+        all_questions_result = []  # 记录所有题目的结果
         wrong_ids_to_remove = []  # 存储需要删除的题目ID
         
         # 遍历本次练习的所有题目
         for question in session_wrong_questions:
             question_id = question['id']
             user_answer = user_answers.get(str(question_id), '').upper()
+            correct_answer = question['answer'].upper()
+            is_correct = user_answer == correct_answer
             
-            if user_answer == question['answer'].upper():
+            # 记录所有题目的结果
+            all_questions_result.append({
+                'question': question,
+                'user_answer': user_answer,
+                'correct_answer': correct_answer,
+                'is_correct': is_correct
+            })
+            
+            if is_correct:
                 score += 1
                 # 记录需要删除的题目ID
                 wrong_ids_to_remove.append(question_id)
-            else:
-                # 记录错题信息（包含完整的题目数据）
-                wrong_questions_result.append({
-                    'question': question,
-                    'user_answer': user_answer,
-                    'correct_answer': question['answer'].upper()
-                })
         
         # 一次性删除所有答对的题目
         for question_id in wrong_ids_to_remove:
@@ -271,7 +287,8 @@ def wrong_quiz():
                              score=score, 
                              total=total, 
                              percentage=round(percentage, 1),
-                             wrong_questions=wrong_questions_result)
+                             all_questions_result=all_questions_result,
+                             wrong_questions=[q for q in all_questions_result if not q['is_correct']])
     else:
         # 加载错题本数据
         wrong_questions_list = load_wrong_questions()
@@ -283,12 +300,89 @@ def wrong_quiz():
         random.shuffle(wrong_questions_list)
         # 将本次练习的题目列表存储到session中
         session['wrong_questions'] = wrong_questions_list
-        return render_template('wrong_quiz.html', questions=wrong_questions_list)
+        return render_template('wrong_quiz.html', questions=wrong_questions_list, message="本次练习包含错题本中的所有题目")
+
+@app.route('/wrong_quiz/last', methods=['GET', 'POST'])
+def wrong_quiz_last():
+    """练习刚刚做错的题目"""
+    if request.method == 'POST':
+        # 从session中获取本次练习的题目列表
+        session_wrong_questions = session.get('wrong_questions', [])
+        
+        if not session_wrong_questions:
+            return redirect('/wrong_quiz/last')
+        
+        # 处理答题结果
+        user_answers = request.form.to_dict()
+        score = 0
+        total = len(session_wrong_questions)
+        all_questions_result = []  # 记录所有题目的结果
+        wrong_ids_to_remove = []  # 存储需要删除的题目ID
+        
+        # 遍历本次练习的所有题目
+        for question in session_wrong_questions:
+            question_id = question['id']
+            user_answer = user_answers.get(str(question_id), '').upper()
+            correct_answer = question['answer'].upper()
+            is_correct = user_answer == correct_answer
+            
+            # 记录所有题目的结果
+            all_questions_result.append({
+                'question': question,
+                'user_answer': user_answer,
+                'correct_answer': correct_answer,
+                'is_correct': is_correct
+            })
+            
+            if is_correct:
+                score += 1
+                # 记录需要删除的题目ID
+                wrong_ids_to_remove.append(question_id)
+        
+        # 一次性删除所有答对的题目
+        for question_id in wrong_ids_to_remove:
+            remove_from_wrong_questions(question_id)
+        
+        # 清除session中的错题列表和last_wrong_ids
+        session.pop('wrong_questions', None)
+        session.pop('last_wrong_ids', None)
+        
+        # 计算得分
+        percentage = (score / total) * 100
+        return render_template('wrong_quiz_result.html', 
+                             score=score, 
+                             total=total, 
+                             percentage=round(percentage, 1),
+                             all_questions_result=all_questions_result,
+                             wrong_questions=[q for q in all_questions_result if not q['is_correct']])
+    else:
+        # 从session中获取本次练习做错的题目ID
+        last_wrong_ids = session.get('last_wrong_ids', [])
+        
+        if not last_wrong_ids:
+            return render_template('wrong_quiz.html', questions=[], no_questions=True, message="没有找到刚刚做错的题目！")
+        
+        # 加载所有题目数据
+        questions = load_questions()
+        # 获取本次练习做错的题目
+        last_wrong_questions = [q for q in questions if q['id'] in last_wrong_ids]
+        
+        if not last_wrong_questions:
+            return render_template('wrong_quiz.html', questions=[], no_questions=True, message="没有找到刚刚做错的题目！")
+        
+        # 随机排序错题
+        random.shuffle(last_wrong_questions)
+        # 将本次练习的题目列表存储到session中
+        session['wrong_questions'] = last_wrong_questions
+        return render_template('wrong_quiz.html', questions=last_wrong_questions, message="本次练习仅包含您刚刚做错的题目")
 
 @app.route('/api/add_wrong/<int:question_id>', methods=['POST'])
 def api_add_wrong(question_id):
     """API接口：添加错题到错题本"""
-    success = add_to_wrong_questions(question_id)
+    questions = load_questions()
+    # 找到完整的题目对象
+    question = next(q for q in questions if q['id'] == question_id)
+    success = add_to_wrong_questions(question)
     return jsonify({'success': success, 'message': '添加成功' if success else '题目已存在'})
 
 @app.route('/api/remove_wrong/<int:question_id>', methods=['POST'])
