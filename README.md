@@ -4,7 +4,7 @@
 [![Flask](https://img.shields.io/badge/Flask-2.x-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-一个专为历史学习者设计的交互式复习软件，提供随机答题、章节练习、题目查询和错题解析功能，帮助用户高效备考。
+一个专为HDU设计的交互式复习软件，提供随机答题、章节练习、题目查询和错题解析功能，帮助用户高效备考。
 
 ## 📖 项目介绍
 
@@ -175,5 +175,6 @@ HDU-History-Killer/
 ---
 
 **希望 HDU-History-Killer 能帮助您轻松备考，取得好成绩！** 🎉
+
 
 
