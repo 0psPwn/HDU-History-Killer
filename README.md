@@ -4,7 +4,7 @@
 [![Flask](https://img.shields.io/badge/Flask-2.x-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-一个专为历史学习者设计的交互式复习软件，提供随机答题、章节练习、题目查询和错题解析功能，帮助用户高效备考。
+一个专为HDU设计的交互式复习软件，提供随机答题、章节练习、题目查询和错题解析功能，帮助用户高效备考。
 
 ## 📖 项目介绍
 
@@ -18,12 +18,6 @@ HDU-History-Killer 是一款基于 Flask 框架开发的历史复习 Web 应用�
 - **题目查询功能**：根据题干关键词快速查找相关题目和答案
 - **分数结算系统**：答题结束后自动计算得分并显示详细结果
 - **错题解析**：测试结束后显示错题及正确答案，帮助用户查漏补缺
-
-### 🎨 界面设计
-- 现代化响应式设计，支持桌面和移动设备
-- 清晰美观的题目卡片和选项布局
-- 直观的进度条和得分展示
-- 精心设计的错题解析界面，红色标记用户错误，绿色显示正确答案
 
 ### 📊 学习数据
 - 实时计算答题准确率
@@ -39,23 +33,17 @@ HDU-History-Killer 是一款基于 Flask 框架开发的历史复习 Web 应用�
 
 ### 安装步骤
 
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/0psPwn/HDU-History-Killer.git
-   cd HDU-History-Killer
-   ```
-
-2. **安装依赖**
+1. **安装依赖**
    ```bash
    pip install flask
    ```
 
-3. **启动应用**
+2. **启动应用**
    ```bash
    python app.py
    ```
 
-4. **访问应用**
+3. **访问应用**
    在浏览器中打开：`http://127.0.0.1:5000`
 
 ## 📚 使用说明
@@ -79,17 +67,6 @@ HDU-History-Killer 是一款基于 Flask 框架开发的历史复习 Web 应用�
 - 在搜索框中输入关键词
 - 系统会返回包含该关键词的所有题目
 - 点击题目可查看详细信息和答案
-
-## 🛠️ 技术架构
-
-### 后端
-- **Flask**：轻量级 Web 框架
-- **Jinja2**：模板引擎
-- **Session**：用户会话管理
-
-### 数据存储
-- **JSON**：简单高效的数据存储格式
-- **本地文件**：题库存储在 `历史选择题整理.json` 文件中
 
 ### 题库结构
 ```json
@@ -174,3 +151,4 @@ HDU-History-Killer/
 ---
 
 **希望 HDU-History-Killer 能帮助您轻松备考，取得好成绩！** 🎉
+
