@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史复习软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .menu-item:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>历史复习软件</h1>
+        <div class="menu">
+            <a href="/quiz" class="menu-item">开始随机答题</a>
+            <a href="/chapters" class="menu-item">章节测试</a>
+            <a href="/search" class="menu-item">题目查询</a>
+        </div>
+        <div class="footer">
+            <p>包含 {{ total_questions }} 道历史选择题</p>
+            <p>点击按钮开始您的复习之旅</p>
+        </div>
+    </div>
+    <script>
+        // 从API获取题目数量
+        fetch('/api/questions')
+            .then(response => response.json())
+            .then(data => {
+                const footer = document.querySelector('.footer');
+                const questionCountElement = footer.querySelector('p:first-child');
+                questionCountElement.textContent = `包含 ${data.length} 道历史选择题`;
+            });
+    </script>
+</body>
+</html>
