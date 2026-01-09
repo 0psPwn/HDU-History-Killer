@@ -82,8 +82,16 @@ def chapter_quiz(chapter_name):
         # 从session中获取本次练习的题目列表
         session_chapter_questions = session.get('chapter_questions', [])
         
+        # 如果session中没有题目列表，就从题目数据文件中重新加载
         if not session_chapter_questions:
-            return redirect(f'/chapter/{chapter_name}')
+            # 从题目数据文件中加载所有题目
+            all_questions = load_questions()
+            
+            # 筛选出指定章节的所有题目
+            session_chapter_questions = [q for q in all_questions if q['chapter'] == chapter_name]
+            
+            # 随机排序题目（与GET分支保持一致）
+            random.shuffle(session_chapter_questions)
         
         # 处理答题结果
         user_answers = request.form.to_dict()
@@ -144,8 +152,13 @@ def quiz():
         # 从session中获取本次练习的题目列表
         session_quiz_questions = session.get('quiz_questions', [])
         
+        # 如果session中没有题目列表，就从题目数据文件中重新加载
         if not session_quiz_questions:
-            return redirect('/quiz')
+            # 从题目数据文件中加载所有题目
+            all_questions = load_questions()
+            
+            # 随机选择10道题目（与GET分支保持一致）
+            session_quiz_questions = random.sample(all_questions, min(10, len(all_questions)))
         
         # 处理答题结果
         user_answers = request.form.to_dict()
@@ -244,8 +257,14 @@ def wrong_quiz():
         # 从session中获取本次练习的题目列表
         session_wrong_questions = session.get('wrong_questions', [])
         
+        # 如果session中没有题目列表，就从错题本中重新加载
         if not session_wrong_questions:
-            return redirect('/wrong_quiz')
+            # 从错题本中加载所有题目
+            wrong_questions_list = load_wrong_questions()
+            
+            # 随机排序错题（与GET分支保持一致）
+            random.shuffle(wrong_questions_list)
+            session_wrong_questions = wrong_questions_list
         
         # 处理答题结果
         user_answers = request.form.to_dict()
@@ -309,8 +328,26 @@ def wrong_quiz_last():
         # 从session中获取本次练习的题目列表
         session_wrong_questions = session.get('wrong_questions', [])
         
+        # 如果session中没有题目列表，就从题目数据文件中重新加载
         if not session_wrong_questions:
-            return redirect('/wrong_quiz/last')
+            # 从session中获取本次练习做错的题目ID
+            last_wrong_ids = session.get('last_wrong_ids', [])
+            
+            if not last_wrong_ids:
+                # 如果没有找到刚刚做错的题目，就显示错误信息
+                return render_template('wrong_quiz.html', questions=[], no_questions=True, message="没有找到刚刚做错的题目！")
+            
+            # 加载所有题目数据
+            questions = load_questions()
+            # 获取本次练习做错的题目
+            last_wrong_questions = [q for q in questions if q['id'] in last_wrong_ids]
+            
+            if not last_wrong_questions:
+                return render_template('wrong_quiz.html', questions=[], no_questions=True, message="没有找到刚刚做错的题目！")
+            
+            # 随机排序错题（与GET分支保持一致）
+            random.shuffle(last_wrong_questions)
+            session_wrong_questions = last_wrong_questions
         
         # 处理答题结果
         user_answers = request.form.to_dict()
